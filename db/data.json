@@ -3,15 +3,11 @@
   "numVisitors": 3,
   "data": [
     {
-      "name": "David",
+      "name": "Johir",
       "message": "Anyone here?"
     },
     {
-      "name": "Peter",
-      "message": "Hey David, How's it going?"
-    },
-    {
-      "name": "Guest3",
+      "name": "Sultan",
       "message": "Hello?"
     }
   ]
