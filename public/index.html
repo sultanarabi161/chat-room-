@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
         html, body {
             height: 100%;
             font-size: 18px;
-            font-family: Arial, sans-serif;
+            font-family: 'Bangla', Arial, sans-serif;
             background-color: #f0f2f5;
         }
 
@@ -103,13 +103,6 @@
 
         .chatArea__text--other {
             background-color: #E5E5EA;
-        }
-
-        .chatArea__status {
-            text-align: center;
-            color: #888;
-            font-style: italic;
-            margin: 5px 0;
         }
 
         #inputArea {
@@ -243,8 +236,8 @@
     </div>
     <div id="menu">
         <ul>
-            <li id="showProfile"><i class="fa fa-user"></i> View Profile</li>
-            <li id="showOnlineUsers"><i class="fa fa-users"></i> Online Users</li>
+            <li id="showProfile"><i class="fa fa-user"></i> Profile</li>
+            <li id="showOnlineUsers"><i class="fa fa-users"></i> Online users</li>
             <li id="showSettings"><i class="fa fa-cog"></i> Settings</li>
             <li id="clearChat"><i class="fa fa-trash"></i> Clear Chat</li>
         </ul>
@@ -253,32 +246,32 @@
         <div id="chatArea"></div>
         <div id="inputArea">
             <div id="messageInputWrapper">
-                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="Type a message..."></textarea>
+                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="মেসেজ লিখুন..."></textarea>
                 <button id="emojiPicker">😊</button>
             </div>
-            <button id="inputArea__sendButton">Send</button>
+            <button id="inputArea__sendButton">পাঠান</button>
         </div>
     </div>
     <div id="emojiPanel"></div>
     <div id="profileModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Profile</h2>
+            <h2>প্রোফাইল</h2>
             <p id="profileName"></p>
         </div>
     </div>
     <div id="onlineUsersModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Online Users</h2>
+            <h2>অনলাইন ইউজারস</h2>
             <ul id="onlineUsersList"></ul>
         </div>
     </div>
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Settings</h2>
-            <p>Settings page is not yet implemented.</p>
+            <h2>সেটিংস</h2>
+            <p>সেটিংস পেইজ এখনও তৈরি করা হয়নি।</p>
         </div>
     </div>
     <script>
@@ -299,40 +292,17 @@
             '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾'
         ];
 
-        async function updateUserStatus(name, status) {
-            const statusUrl = "/api/v1/chat/userstatus";
-            const statusApiOptions = { 
-                method: "POST", 
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ name: name, status: status }) 
-            };
-            const statusResponse = await fetch(statusUrl, statusApiOptions);
-            const statusJson = await statusResponse.json();
-            return statusJson;
-        }
-
-        function addStatusMessageToChatArea(name, status) {
-            const $chatArea = document.getElementById("chatArea");
-            const $div = document.createElement('div');
-            $div.className = 'chatArea__status';
-            $div.textContent = `${name} has ${status === 'join' ? 'joined' : 'left'} the chat`;
-            $chatArea.appendChild($div);
-            $chatArea.scrollTop = $chatArea.scrollHeight;
-        }
-
         function checkForStoredUser() {
             const storedName = localStorage.getItem('chatUserName');
             if (storedName) {
                 currentUserName = storedName;
-                updateUserStatus(currentUserName, 'join');
             } else {
-                let userName = prompt("Enter your name:");
+                let userName = prompt("আপনার নাম দিন:");
                 if (userName) {
                     currentUserName = userName;
                     localStorage.setItem('chatUserName', userName);
-                    updateUserStatus(currentUserName, 'join');
                 } else {
-                    alert("Name is required. Please try again.");
+                    alert("নাম দেওয়া বাধ্যতামূলক। পুনরায় চেষ্টা করুন।");
                     checkForStoredUser();
                 }
             }
@@ -377,16 +347,11 @@
             return chatJson;
         }
 
-        function addDivToChatArea(name, message, type) {
+        function addDivToChatArea(name, message) {
             const $chatArea = document.getElementById("chatArea");
             const $div = document.createElement('div');
-            if (type === 'message') {
-                $div.className = `chatArea__text ${name === currentUserName ? 'chatArea__text--self' : 'chatArea__text--other'}`;
-                $div.textContent = `${name}: ${message}`;
-            } else if (type === 'status') {
-                $div.className = 'chatArea__status';
-                $div.textContent = message;
-            }
+            $div.className = `chatArea__text ${name === currentUserName ? 'chatArea__text--self' : 'chatArea__text--other'}`;
+            $div.textContent = `${name}: ${message}`;
             $chatArea.appendChild($div);
             onlineUsers.add(name);
         }
@@ -395,7 +360,7 @@
             const $message = document.getElementById("inputArea__message").value;
             if ($message.trim()) {
                 addChatDataElement(currentUserName, $message);
-                addDivToChatArea(currentUserName, $message, 'message');
+                addDivToChatArea(currentUserName, $message);
                 document.getElementById("inputArea__message").value = "";
             }
         }
@@ -410,21 +375,21 @@
         }
 
         function showOnlineUsers() {
-    const modal = document.getElementById('onlineUsersModal');
-    const userList = document.getElementById('onlineUsersList');
-    userList.innerHTML = '';
-    onlineUsers.forEach(user => {
-        const li = document.createElement('li');
-        li.textContent = user;
-        userList.appendChild(li);
-    });
-    modal.style.display = "block";
-}
+            const modal = document.getElementById('onlineUsersModal');
+            const userList = document.getElementById('onlineUsersList');
+            userList.innerHTML = '';
+            onlineUsers.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user;
+                userList.appendChild(li);
+            });
+            modal.style.display = "block";
+        }
 
-function showProfile() {
+        function showProfile() {
     const modal = document.getElementById('profileModal');
     const profileName = document.getElementById('profileName');
-    profileName.textContent = `Your name: ${currentUserName}`;
+    profileName.textContent = `আপনার নাম: ${currentUserName}`;
     modal.style.display = "block";
 }
 
@@ -434,7 +399,7 @@ function showSettings() {
 }
 
 function clearChat() {
-    if (confirm("Are you sure you want to clear the chat?")) {
+    if (confirm("আপনি কি নিশ্চিত যে আপনি চ্যাট মুছে ফেলতে চান?")) {
         document.getElementById("chatArea").innerHTML = "";
         // Here you should also clear the chat data from the server
     }
@@ -504,11 +469,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         const $chatArea = document.getElementById("chatArea");
         $chatArea.textContent = '';
         for (let i = 0; i < chatData.length; ++i) {
-            if (chatData[i].type === 'message') {
-                addDivToChatArea(chatData[i].name, chatData[i].message, 'message');
-            } else if (chatData[i].type === 'status') {
-                addDivToChatArea(chatData[i].name, chatData[i].message, 'status');
-            }
+            addDivToChatArea(chatData[i].name, chatData[i].message);
         }
         if (prevChatDataLength != chatData.length)
             $chatArea.scrollTop = $chatArea.scrollHeight;
@@ -526,12 +487,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById("inputArea__message").addEventListener('keypress', inputAreaMessageKeyPressed);
     document.getElementById("inputArea__sendButton").addEventListener('click', sendCurrentChatMessage);
 });
-
-// Add an event listener for when the user closes the window or navigates away
-window.addEventListener('beforeunload', () => {
-    updateUserStatus(currentUserName, 'leave');
-});
-    </script>
+</script>
 </body>
 </html>
-
