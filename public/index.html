@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>উন্নত চ্যাট রুম</title>
+    <title>Orbit Chat Room</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             padding: 0;
@@ -16,7 +17,7 @@
         }
 
         body {
-            font-family: 'Bangla', Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             background-color: #f0f2f5;
         }
 
@@ -25,6 +26,41 @@
             color: white;
             padding: 10px;
             text-align: center;
+            position: relative;
+        }
+
+        #menuIcon {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+
+        #menu {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            width: 200px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #menu ul {
+            list-style-type: none;
+        }
+
+        #menu ul li {
+            padding: 5px 0;
+            cursor: pointer;
+        }
+
+        #menu ul li:hover {
+            background-color: #f0f0f0;
         }
 
         #body {
@@ -129,21 +165,42 @@
 </head>
 <body>
     <div id="header">
-        <h1>উন্নত চ্যাট রুম</h1>
+        <i id="menuIcon" class="fa fa-bars"></i>
+        <h1>Advanced Chat Room</h1>
+        <div id="menu">
+            <ul>
+                <li>Profile</li>
+                <li>Online Users</li>
+                <li>Settings</li>
+            </ul>
+        </div>
     </div>
     <div id="body">
         <div id="chatArea"></div>
         <div id="inputArea">
-            <input type="text" id="inputArea__name" maxlength="40" spellcheck="false" placeholder="নাম" value="অতিথি">
+            <input type="text" id="inputArea__name" maxlength="40" spellcheck="false" placeholder="Name" value="">
             <div id="messageInputWrapper">
-                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="মেসেজ লিখুন..."></textarea>
+                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="Type your message..."></textarea>
                 <button id="emojiPicker">😊</button>
             </div>
-            <button id="inputArea__sendButton">পাঠান</button>
+            <button id="inputArea__sendButton">Send</button>
         </div>
     </div>
     <script>
         let prevChatDataLength = 0;
+
+        function checkForStoredUser() {
+            const storedName = localStorage.getItem('chatUserName');
+            if (storedName) {
+                document.getElementById('inputArea__name').value = storedName;
+            } else {
+                let userName = prompt("Enter your name:");
+                if (userName) {
+                    document.getElementById('inputArea__name').value = userName;
+                    localStorage.setItem('chatUserName', userName);
+                }
+            }
+        }
 
         async function getChatData() {
             const chatUrl = "/api/v1/chat/data";
@@ -220,6 +277,13 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('menuIcon').addEventListener('click', () => {
+                const menu = document.getElementById('menu');
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+
+            checkForStoredUser();
+
             setInterval(async function () {
                 const chatData = await getChatData();
                 const $chatArea = document.getElementById("chatArea");
@@ -235,13 +299,10 @@
             let numVisitors = await getChatNumVisitors();
             if (numVisitors < 1000000) {
                 numVisitors++;
-            }
-            else {
+            } else {
                 numVisitors = 0;
             }
             await updateChatNumVisitors(numVisitors);
-            let $name = document.getElementById("inputArea__name");
-            $name.value = `অতিথি${numVisitors}`;
 
             document.getElementById("inputArea__name").addEventListener('keydown', inputAreaNameKeyPressed);
             document.getElementById("inputArea__message").addEventListener('keypress', inputAreaMessageKeyPressed);
