@@ -1,28 +1,252 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="bn">
 <head>
-    <title>Chat Room</title>
-    <link rel="stylesheet" href="css/main.css">
-    </link>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>উন্নত চ্যাট রুম</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
 
+        html {
+            font-size: 18px;
+        }
+
+        body {
+            font-family: 'Bangla', Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+
+        #header {
+            background-color: #4267B2;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        #chatArea {
+            height: calc(100vh - 220px);
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .chatArea__text {
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .chatArea__text--self {
+            background-color: #DCF8C6;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .chatArea__text--other {
+            background-color: #E5E5EA;
+        }
+
+        #inputArea {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #inputArea__name {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #messageInputWrapper {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        #inputArea__message {
+            flex-grow: 1;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        #emojiPicker {
+            margin-left: 5px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #inputArea__sendButton {
+            padding: 10px;
+            background-color: #4267B2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            html {
+                font-size: 16px;
+            }
+
+            #body {
+                padding: 10px;
+            }
+
+            #chatArea {
+                height: calc(100vh - 240px);
+            }
+
+            #inputArea__name, #messageInputWrapper, #inputArea__sendButton {
+                width: 100%;
+            }
+
+            #inputArea__message {
+                width: calc(100% - 40px);
+            }
+        }
+    </style>
+</head>
 <body>
     <div id="header">
-        <h1>Chat Room</h1>
+        <h1>উন্নত চ্যাট রুম</h1>
     </div>
     <div id="body">
-        <script src="js/main.js"></script>
-        <div id="chatArea">
-        </div>
+        <div id="chatArea"></div>
         <div id="inputArea">
-            <textarea id="inputArea__name" maxlength="40" spellcheck="false" onkeydown="inputAreaNameKeyPressed();">Guest</textarea>
-            <textarea id="inputArea__message" maxlength="400" spellcheck="false" onkeypress="inputAreaMessageKeyPressed();"></textarea>
-            <button id="inputArea__sendButton">
-                Send
-            </button>
+            <input type="text" id="inputArea__name" maxlength="40" spellcheck="false" placeholder="নাম" value="অতিথি">
+            <div id="messageInputWrapper">
+                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="মেসেজ লিখুন..."></textarea>
+                <button id="emojiPicker">😊</button>
+            </div>
+            <button id="inputArea__sendButton">পাঠান</button>
         </div>
     </div>
-</body>
+    <script>
+        let prevChatDataLength = 0;
 
+        async function getChatData() {
+            const chatUrl = "/api/v1/chat/data";
+            const chatUrlApiOptions = { method: "GET" };
+            const chatUrlResponse = await fetch(chatUrl, chatUrlApiOptions);
+            const chatJson = await chatUrlResponse.json();
+            return chatJson;
+        }
+
+        async function addChatDataElement(name, message) {
+            const chatUrl = "/api/v1/chat/data";
+            const chatUrlApiOptions = { 
+                method: "POST", 
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ name: name, message: message }) 
+            };
+            const chatUrlResponse = await fetch(chatUrl, chatUrlApiOptions);
+            const chatJson = await chatUrlResponse.json();
+            return chatJson;
+        }
+
+        async function getChatNumVisitors() {
+            const chatUrl = "/api/v1/chat/numvisitors";
+            const chatUrlApiOptions = { method: "GET" };
+            const chatUrlResponse = await fetch(chatUrl, chatUrlApiOptions);
+            const chatJson = await chatUrlResponse.json();
+            return chatJson;
+        }
+
+        async function updateChatNumVisitors(num) {
+            const chatUrl = `/api/v1/chat/numvisitors/${num}`;
+            const chatUrlApiOptions = { 
+                method: "PUT", 
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } 
+            };
+            const chatUrlResponse = await fetch(chatUrl, chatUrlApiOptions);
+            const chatJson = await chatUrlResponse.json();
+            return chatJson;
+        }
+
+        function addDivToChatArea(name, message) {
+            const $chatArea = document.getElementById("chatArea");
+            const $div = document.createElement('div');
+            $div.className = "chatArea__text";
+            $div.textContent = `${name}: ${message}`;
+            $chatArea.appendChild($div);
+        }
+
+        function sendCurrentChatMessage() {
+            const $name = document.getElementById("inputArea__name").value;
+            const $message = document.getElementById("inputArea__message").value;
+            if ($message.trim()) {
+                addChatDataElement($name, $message);
+                addDivToChatArea($name, $message);
+                document.getElementById("inputArea__message").value = "";
+            }
+        }
+
+        function inputAreaNameKeyPressed(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        function inputAreaMessageKeyPressed(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                sendCurrentChatMessage();
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            setInterval(async function () {
+                const chatData = await getChatData();
+                const $chatArea = document.getElementById("chatArea");
+                $chatArea.textContent = '';
+                for (let i = 0; i < chatData.length; ++i) {
+                    addDivToChatArea(chatData[i].name, chatData[i].message);
+                }
+                if (prevChatDataLength != chatData.length)
+                    $chatArea.scrollTop = $chatArea.scrollHeight;
+                prevChatDataLength = chatData.length;
+            }, 100);
+
+            let numVisitors = await getChatNumVisitors();
+            if (numVisitors < 1000000) {
+                numVisitors++;
+            }
+            else {
+                numVisitors = 0;
+            }
+            await updateChatNumVisitors(numVisitors);
+            let $name = document.getElementById("inputArea__name");
+            $name.value = `অতিথি${numVisitors}`;
+
+            document.getElementById("inputArea__name").addEventListener('keydown', inputAreaNameKeyPressed);
+            document.getElementById("inputArea__message").addEventListener('keypress', inputAreaMessageKeyPressed);
+            document.getElementById("inputArea__sendButton").addEventListener('click', sendCurrentChatMessage);
+        });
+    </script>
+</body>
 </html>
