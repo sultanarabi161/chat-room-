@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbit Chat Room</title>
+    <title>উন্নত চ্যাট রুম</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -17,7 +18,7 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Bangla', Arial, sans-serif;
             background-color: #f0f2f5;
         }
 
@@ -70,7 +71,7 @@
         }
 
         #chatArea {
-            height: calc(100vh - 220px);
+            height: calc(100vh - 180px);
             overflow-y: auto;
             border: 1px solid #ddd;
             background-color: white;
@@ -100,13 +101,6 @@
         #inputArea {
             display: flex;
             flex-direction: column;
-        }
-
-        #inputArea__name {
-            margin-bottom: 10px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
         }
 
         #messageInputWrapper {
@@ -140,6 +134,18 @@
             cursor: pointer;
         }
 
+        #onlineUsers {
+            margin-top: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        #onlineUsers h3 {
+            margin-bottom: 5px;
+        }
+
         @media (max-width: 768px) {
             html {
                 font-size: 16px;
@@ -150,10 +156,10 @@
             }
 
             #chatArea {
-                height: calc(100vh - 240px);
+                height: calc(100vh - 200px);
             }
 
-            #inputArea__name, #messageInputWrapper, #inputArea__sendButton {
+            #messageInputWrapper, #inputArea__sendButton {
                 width: 100%;
             }
 
@@ -166,38 +172,43 @@
 <body>
     <div id="header">
         <i id="menuIcon" class="fa fa-bars"></i>
-        <h1>Advanced Chat Room</h1>
+        <h1>উন্নত চ্যাট রুম</h1>
         <div id="menu">
             <ul>
-                <li>Profile</li>
-                <li>Online Users</li>
-                <li>Settings</li>
+                <li id="showProfile">প্রোফাইল দেখুন</li>
+                <li id="showOnlineUsers">অনলাইন ইউজারস</li>
+                <li id="showSettings">সেটিংস</li>
+                <li id="clearChat">চ্যাট মুছুন</li>
             </ul>
         </div>
     </div>
     <div id="body">
         <div id="chatArea"></div>
         <div id="inputArea">
-            <input type="text" id="inputArea__name" maxlength="40" spellcheck="false" placeholder="Name" value="">
             <div id="messageInputWrapper">
-                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="Type your message..."></textarea>
+                <textarea id="inputArea__message" maxlength="400" spellcheck="false" placeholder="মেসেজ লিখুন..."></textarea>
                 <button id="emojiPicker">😊</button>
             </div>
-            <button id="inputArea__sendButton">Send</button>
+            <button id="inputArea__sendButton">পাঠান</button>
         </div>
     </div>
     <script>
         let prevChatDataLength = 0;
+        let currentUserName = '';
+        let onlineUsers = new Set();
 
         function checkForStoredUser() {
             const storedName = localStorage.getItem('chatUserName');
             if (storedName) {
-                document.getElementById('inputArea__name').value = storedName;
+                currentUserName = storedName;
             } else {
-                let userName = prompt("Enter your name:");
+                let userName = prompt("আপনার নাম দিন:");
                 if (userName) {
-                    document.getElementById('inputArea__name').value = userName;
+                    currentUserName = userName;
                     localStorage.setItem('chatUserName', userName);
+                } else {
+                    alert("নাম দেওয়া বাধ্যতামূলক। পুনরায় চেষ্টা করুন।");
+                    checkForStoredUser();
                 }
             }
         }
@@ -244,27 +255,19 @@
         function addDivToChatArea(name, message) {
             const $chatArea = document.getElementById("chatArea");
             const $div = document.createElement('div');
-            $div.className = "chatArea__text";
+            $div.className = `chatArea__text ${name === currentUserName ? 'chatArea__text--self' : 'chatArea__text--other'}`;
             $div.textContent = `${name}: ${message}`;
             $chatArea.appendChild($div);
+            onlineUsers.add(name);
         }
 
         function sendCurrentChatMessage() {
-            const $name = document.getElementById("inputArea__name").value;
             const $message = document.getElementById("inputArea__message").value;
             if ($message.trim()) {
-                addChatDataElement($name, $message);
-                addDivToChatArea($name, $message);
+                addChatDataElement(currentUserName, $message);
+                addDivToChatArea(currentUserName, $message);
                 document.getElementById("inputArea__message").value = "";
             }
-        }
-
-        function inputAreaNameKeyPressed(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                return false;
-            }
-            return true;
         }
 
         function inputAreaMessageKeyPressed(event) {
@@ -276,13 +279,38 @@
             return true;
         }
 
+        function showOnlineUsers() {
+            const userList = Array.from(onlineUsers).join(', ');
+            alert(`অনলাইন ইউজারস: ${userList}`);
+        }
+
+        function showProfile() {
+            alert(`আপনার নাম: ${currentUserName}`);
+        }
+
+        function showSettings() {
+            alert("সেটিংস পেইজ এখনও তৈরি করা হয়নি।");
+        }
+
+        function clearChat() {
+            if (confirm("আপনি কি নিশ্চিত যে আপনি চ্যাট মুছে ফেলতে চান?")) {
+                document.getElementById("chatArea").innerHTML = "";
+                // Here you should also clear the chat data from the server
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
+            checkForStoredUser();
+
             document.getElementById('menuIcon').addEventListener('click', () => {
                 const menu = document.getElementById('menu');
                 menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
             });
 
-            checkForStoredUser();
+            document.getElementById('showOnlineUsers').addEventListener('click', showOnlineUsers);
+            document.getElementById('showProfile').addEventListener('click', showProfile);
+            document.getElementById('showSettings').addEventListener('click', showSettings);
+            document.getElementById('clearChat').addEventListener('click', clearChat);
 
             setInterval(async function () {
                 const chatData = await getChatData();
@@ -304,10 +332,10 @@
             }
             await updateChatNumVisitors(numVisitors);
 
-            document.getElementById("inputArea__name").addEventListener('keydown', inputAreaNameKeyPressed);
             document.getElementById("inputArea__message").addEventListener('keypress', inputAreaMessageKeyPressed);
             document.getElementById("inputArea__sendButton").addEventListener('click', sendCurrentChatMessage);
         });
     </script>
 </body>
 </html>
+
